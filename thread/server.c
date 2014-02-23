@@ -9,14 +9,83 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <pthread.h>
+
+#define MAXLINE 10
 
 struct sigaction ACT, ACT2;
 char *HOST = "127.0.0.1";
 char PORT[100];
-pid_t pid;
+
+int readn(int fd, void *vptr, int n){
+    /* THis is used as the standard is buggy and cannpt be debugged*/
+    int nleft;
+    int nread;
+    char *ptr;
+
+    ptr=vptr;
+    nleft = n;
+    while(nleft>0){
+        if((nread=read(fd, ptr, nleft))<0){
+            printf("ERROR CLIENT\n");
+            if(errno==EINTR){
+                /*Interrupted system call*/
+                nread = 0;
+            }
+            else{
+                printf("ERORR\n");
+                return -1;
+            }
+        }
+        else if(nread==0){
+            /*EOF*/
+            printf("EOF\n");
+            break; 
+        }
+       //printf("Nleft: %d, Nread: %d\n", nleft, nread);
+       nleft-=nread;
+       ptr+=nread;
+       //printf("Nleft: %d, Nread: %d\n", nleft, nread);
+    }
+
+    return (n-nleft);
+}
+
+void str_echo(int sockfd){
+    char buf[MAXLINE];
+    int n;
+
+    again:
+        //while((n=read(sockfd, buf, MAXLINE))>0){
+        while((n=readn(sockfd, buf, MAXLINE))>0){
+            printf("%s", buf);
+            if(write(sockfd, buf, MAXLINE)<0){
+                perror("WRITE");
+            }
+        }
+
+    if(n<0 && errno == EINTR){
+        printf("Err");
+        /* System cal was interrupted by a signal */
+       goto again; 
+    }
+    if(n<0){
+        printf("READ ERROR\n");
+    }
+}
+
+void *doit(void *arg){
+    /* Thread function */
+    pthread_detach(pthread_self());
+    str_echo((int)arg);
+    close((int)arg);
+    printf("Thread Exiting\n");
+    return NULL;
+}
 
 void start(){
     struct addrinfo hints, *res;
+    pthread_t th;
     char buff[1000];
     time_t t;
   
@@ -26,51 +95,30 @@ void start(){
     
     getaddrinfo(HOST, PORT, &hints, &res);
     
-    int sock = socket(res->ai_family, res->ai_socktype, 0);
+    int listenfd = socket(res->ai_family, res->ai_socktype, 0);
 
-    bind(sock, res->ai_addr, res->ai_addrlen);
+    bind(listenfd, res->ai_addr, res->ai_addrlen);
 
-    listen(sock, 10);
+    listen(listenfd, 10);
 
     while(1){
         printf("Waiting\n"); 
         struct sockaddr cliaddr;
         int len = sizeof(cliaddr);
         char human_client[100];
-        int new_sock = accept(sock, &cliaddr, &len);
-        if(new_sock<0){
+        int connfd = accept(listenfd, &cliaddr, &len);
+        if(connfd<0){
+            /*System call interrupted*/
             if(errno==EINTR) {
-                //perror("ACEPT");
                 continue;
             }
             perror("ERROR ACCEPT");
             exit(0);
         }
-
-        if((pid=fork())==0){
-            int n = 100;
-            close(sock);
-
-            while(1){
-            inet_ntop(AF_INET, &cliaddr, human_client, 100);
-            struct sockaddr resultaddr;
-            int len1 = sizeof(resultaddr);
-            getsockname(new_sock, &resultaddr, &len1); 
-            inet_ntop(AF_INET, &resultaddr, human_client, 100);
-
-            send(new_sock, "HELLO FROM SERVER\n", 100, 0);
-            n = read(new_sock, buff, 100);
-            if(n<=0){
-                break;
-            }
-            printf("CLIENT %s : %s\n", human_client, buff);
-
-            }
-            close(new_sock);
-            pthread_exit(0);
-        }
-        close(new_sock);
-    }
+       printf("Connected\n");
+       pthread_create(&th, NULL, doit, (void *)connfd);
+   }
+        
 
 }
 
