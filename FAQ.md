@@ -1,4 +1,5 @@
 Which operating system is running on system?
+-------------------------------------------
 uname -a
 
 How will you bring a process in forground?
