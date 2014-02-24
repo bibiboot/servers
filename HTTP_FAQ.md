@@ -174,3 +174,117 @@ Is their any limit on the number of persistent connection?
 The client can have maximum 2 persistent connection to a server.
 The proxy can have 2N maximum connection if their are atmost N clients trying to access the 
 
+What is pipeline connection?
+On a single persistent connection , without waiting for the result of the request made, another request is enqueued on the same connection.
+This works only for persistent connection.
+The responses must be returned back in the same order of the request.
+
+If the content-length is dubious what to do
+-------------------------------------------
+If i am a caching proxy then dont cache it and just forward the response to the client and dont try to corrrect it.
+
+What to do in case of abrubt Connection close?
+-------------------------------------------
+If the transaction which will lead to some damage then dont repeat. Otherwise try again. Even if the alot of request are in pipeline.
+
+Pracautions to be followed when closing?
+-------------------------------------------
+1. First close your sending descriptor.
+2. As soon as the sending descriptor is closed. An EOF will be send to the other side recieve which will close the reading descriptor of the other side.
+3. The problem with closing the reading descriptor is that if the sender sends and find a closed connection then a "Connection reset by peer" is issued which will reach the sender and the buffer maintained by the sender which is not read yet will be cleared. Thereby damage done.
+Solution: Graceful Close
+
+
+What is graceful close?
+----------------------
+1. First close your output.
+2. Wait for the other end to close their output. 
+3. Once both have issued that they wont be sending any data. The connection can close completely.
+
+5.
+--------------------------
+
+What if the url has directory?
+------------------------------
+If the conf has Directory Index then 
+Directory Index index.html index.cgi  (Preference from left to right)
+If this is not present and default is not disabled then all the listing of the directory is shown as html page.
+To disable : Options -Indexes
+
+How to map the dynamic resources?
+--------------------------------
+Application servers are all built on this.
+SciptAlias /cgi-bin /home/dan/cgi-project ( Any path containing cgi-bin will be executed by program found in the location)
+or 
+AddHandler cgi-script .cgi ( any file ending with .cgi will be executed by the cgi-script )
+
+6.
+-----------------------
+
+Difference b/w proxies and gateways?
+----------------------------------
+COnnect two computer and gateways are protocol converter
+Example of gateway: HTTP/POP
+Advantage of proxy: Transcoding means changing the body: Changing the language or converting the form of image like GIF to JPEG
+
+Whhy is Etag used ?
+Sometimed If-Modified-Since is not adequte. Like the data is touched.
+
+What is no-store or no-cache in Cache-Control?
+no-store means the proxy cache do not store it . It just forward the response.
+no-cache means the proxy can store but not serve without revalidation from the origin server.
+
+What is Cache-control: must-revalidate?
+The cache must revalidate with the server before serving no matter what. Therefore no chance of stale being served.
+
+What if cache-control is not their?
+Then the cache wil calculate the expiry time using heuristic of modification date.
+
+How does the refresh button of thr browser works?
+The client can set Cache-Control diectives to achieve the refresh and reload.
+Example: Cache-Control: max-stale=2s
+         Cache-Control: only if it is cached 
+
+How to cache control using html tag?
+<META HTTP-EQUIV="Cache-control" CONTENT="no-cache">
+
+Advitiser problem due to cache , how to fix it?
+Use cache-control: no cache. 
+Serve using CGI gateways that is dynamic content
+Rewrite advitisement url on every request.
+
+Examples of gateway?
+1. HTTP---->FTP
+2. SSL----->HTTP
+3. HTTP---->Application server----->Program
+
+How to know which gateway to go?
+The browser has default gateway.
+
+Its a gateway.
+What are HTTPS/HTTP accelerator or reverse proxy?
+They recieve the HTTPS request and decript it in to HTTP and send ahead the request in normal format.
+They use sepcial hardware which efficietly decrypt faster.
+
+What is a resource gateway?
+
+Why tunnel?
+Send non-http data through firewall which allow only web data
+
+How to set up tunnel?
+1. Send -----> CONNECT hostname:443 HTTP/1.1
+               User-Agent: Firefox;
+   This reaches a tunnel gateway which firther connects with the host on without tunnel. That is SSL connection.
+2. Recieve <---- HTTP/1.1 200 Connection Established
+3. Start sending encrypted data.
+
+Are the tunnel secured.
+As the tunnel is formed over normal http. Its not till the point of tunnel gateway.
+Require Proxy-Authentication.
+
+PART 3
+--------------------------
+
+
+
+
