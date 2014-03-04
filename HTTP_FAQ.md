@@ -285,6 +285,147 @@ Require Proxy-Authentication.
 PART 3
 --------------------------
 
+What is basic authentication?
+1. Server sends WWW-authenticate: Basic realm="Section of the website". 401 Authentication required is send with status line.
+2. Pop up appears and client sends Authentication: Basic=XYDGHDGHDG
+3. The data is send 16 bit encoded but not encrypted.
+
+What is FAT URL?
+Generate unique URL for each user.
+Ugly and cannot be shared.
+
+Does cookie content are cached ?
+Most of the browser prevent caching of the cookie content.
+
+What are the two types of cookies?
+1. Session cookie: Which destroys itself when the user closes the browser. The cookie comes with a set parameter or discard parameter.
+2. Persistent cookie: The cookie remains. As it is stored in disk.
+
+How is set cookie?
+Set-Cookie: id="XYZ"; domain="www.google.com"; path=/abc/, Secure
+Secure means this cookie will be send only in case of SSL
+
+When client access?
+Cookie: id="XYZ"
+
+Does browser send all the cookie to a given website?
+It usually sends 2-3 cookie.
+
+What is cookie jar?
+Where all the cookie are stored dor a browser.
+
+What are the precautions taken while caching cookie?
+Mark document cache-control: no-cache="Set-Cookie"
+All the mark of the document will be cached except cookie.
+
+There are two authentication provided by HTTP?
+1. Basic authentication ( It will help administrators by mistakingly viweing the password )
+                          Used base-64. Reversible.
+2. Digest authentication
+
+What is proxy-authenticaion ?
+Exactly same as basic authentication.
+Instead just header name change.
+<---- 407 UnAuthorized
+      Proxy-Authenticate
+---->Proxy-Authorization
+
+What is digest authentication?
+After being given challlenge from server to client.
+The digest form of the password is send.
+The server wil have the password and create the digest and compare with the digest arrived.
+Problem with this is that it can be replayed by other users.
+
+Show the layering of the SSL?
+HTTP
+SSL
+TCP
+IP
+
+What is SSL handshake?
+1. Exchange protocol version.
+2. Select a cipher
+3. Authenticate each other.
+4. Generate temporary key.
+
+How to say the response has come?
+In persistent connecton, one response is followed by another. Therefore content-length is so much important.
+Other then in case of chuck-encoding.
+
+Where is the contnent lenght in multipart/ranges?
+Each part will have its own size.
+
+What is multipart/byterange?
+It is a mime type. Where the whole data is broken into multiple byte ranges.
+
+Where is character encoding kept?
+It is placed along with content-type: text/html; charset=iso-898
+
+How is form submitted?
+The request is send as 
+Content-Type: multipart/form-data; boundary=ABC
+ABC
+Content-Disposition: form-data; name="submit-name"
+ABC
+Content-Disposition: form-data; name="files"
+.........file content........
+ABC
+
+Their can be more breaing of data with newer boundaries.
+
+How is multipart/byteranges request and response?
+Request: ----------> content-type: multipart/byteranges; boundary=ABC;
+Response:<---------  content-range: bytes: 0-414/1000
+                     ABC
+                     content-range: bytes: 415-600/1000
+                     ABC
+                     content-range: bytes: 601-1000/1000
+                     ABC
 
 
+How is size determined for chunked encoding?
+The size is just send before the chunk to determine that chunk is send.
+When the whole response ise send. The last chunk is of size 0.
+
+What is range request?
+if the download stopped after 4000. So in the next request ask for range: 4000-
+
+What is delta encoding?
+Just asking for the change and the merging the change int he original data as well as updating the Etag.
+
+WHat is content negotiation and transcoding?
+When a single URL supplies multiple document.
+Example: Accept-Language
+
+How to server different content?
+1. Use type-map files like apache.
+   Where header values and file name is mentioned.
+2. Decison based on user-agent. to give rich data or low data for slow browsers.
+
+
+Exampke of chunked encoding?
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Transfer-Encoding: chunked
+
+25
+This is the data in the first chunk
+
+1C
+and this is the second one
+
+3
+con
+8
+sequence
+0
+
+
+Understanding the download of a large file?
+The server has to make mutiple GT(Audio is served using this technique)
+--->HEAD URL ( to determin the size of the content)
+--->GET request with range: bytes:0-32677
+<--HTTP/1.1 206 Partial Content
+   Content-range: 0.32677/160000
+Therefore the  browser keep making calls for these ranges
 
